@@ -253,50 +253,63 @@ const Tools = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            {aiTools.map((tool) => (
-              <div
-                key={tool.id}
-                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer"
-              >
-                <div className="flex items-center space-x-2 mb-3">
-                  {React.createElement(
-                    eval(tool.icon),
-                    { className: "h-5 w-5" }
-                  )}
-                  <h4 className="font-semibold">{tool.name}</h4>
-                  <Badge 
-                    variant={tool.status === 'active' ? 'secondary' : 'destructive'}
-                    className={tool.status === 'active' ? 'bg-green-500/20 text-green-200' : 'bg-orange-500/20 text-orange-200'}
-                  >
-                    {tool.status}
-                  </Badge>
+            {aiTools.map((tool) => {
+              const IconComponent = getIcon(tool.icon);
+              return (
+                <div
+                  key={tool.id}
+                  className="bg-white/10 backdrop-blur-sm rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2 mb-3">
+                    <IconComponent className="h-5 w-5" />
+                    <h4 className="font-semibold">{tool.name}</h4>
+                    <Badge 
+                      variant={tool.status === 'active' ? 'secondary' : 'destructive'}
+                      className={tool.status === 'active' ? 'bg-green-500/20 text-green-200' : 'bg-orange-500/20 text-orange-200'}
+                    >
+                      {tool.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-white/90">{tool.description}</p>
                 </div>
-                <p className="text-sm text-white/90">{tool.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
       <Tabs defaultValue="calculators" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="calculators">Calcolatori</TabsTrigger>
-          <TabsTrigger value="import-export">Import/Export</TabsTrigger>
-          <TabsTrigger value="advanced">Avanzati</TabsTrigger>
+          <TabsTrigger value="files">File & Analisi</TabsTrigger>
+          <TabsTrigger value="reminders">Promemoria</TabsTrigger>
+          <TabsTrigger value="backup">Backup</TabsTrigger>
         </TabsList>
 
+        {/* CALCOLATORI TAB */}
         <TabsContent value="calculators" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {calculators.map((tool) => (
-              <ToolCard
-                key={tool.id}
-                tool={tool}
-                onClick={() => setActiveCalculator(tool.id)}
-              />
-            ))}
+            {calculators.map((tool) => {
+              const IconComponent = getIcon(tool.icon);
+              return (
+                <Card
+                  key={tool.id}
+                  className="cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group"
+                  onClick={() => setActiveCalculator(tool.id)}
+                >
+                  <CardContent className="p-6">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${tool.color} mb-4 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <IconComponent className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">{tool.name}</h3>
+                    <p className="text-sm text-gray-600">{tool.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
-          {/* Calculator Modals */}
+          {/* Tax Calculator */}
           {activeCalculator === 'tax-calc' && (
             <Card>
               <CardHeader>
@@ -308,19 +321,25 @@ const Tools = () => {
               <CardContent>
                 <form onSubmit={calculateTax} className="space-y-4">
                   <div>
-                    <Label htmlFor="gain">Guadagno (€)</Label>
+                    <Label htmlFor="gain">Guadagno Totale (€)</Label>
                     <Input type="number" name="gain" placeholder="Es. 5000" required />
                   </div>
                   <div>
                     <Label htmlFor="holdingPeriod">Periodo di detenzione (giorni)</Label>
                     <Input type="number" name="holdingPeriod" placeholder="Es. 400" required />
                   </div>
-                  <Button type="submit" className="w-full">Calcola Tasse</Button>
+                  <Button type="submit" className="w-full">
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Calcola Tasse
+                  </Button>
                 </form>
                 
                 {taxResult && (
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold mb-2">Risultato Calcolo:</h4>
+                    <h4 className="font-semibold mb-2 flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      Risultato Calcolo:
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <div>Guadagno lordo: €{taxResult.gain.toFixed(2)}</div>
                       <div>Aliquota fiscale: {taxResult.taxRate}%</div>
@@ -335,12 +354,13 @@ const Tools = () => {
             </Card>
           )}
 
+          {/* Yield Calculator */}
           {activeCalculator === 'yield-calc' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5" />
-                  <span>Calcolatore Rendimento</span>
+                  <span>Calcolatore Rendimento Investimento</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -357,12 +377,18 @@ const Tools = () => {
                     <Label htmlFor="years">Periodo di investimento (anni)</Label>
                     <Input type="number" name="years" placeholder="Es. 10" required />
                   </div>
-                  <Button type="submit" className="w-full">Calcola Rendimento</Button>
+                  <Button type="submit" className="w-full">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Calcola Rendimento
+                  </Button>
                 </form>
                 
                 {yieldResult && (
                   <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                    <h4 className="font-semibold mb-2">Proiezione Investimento:</h4>
+                    <h4 className="font-semibold mb-2 flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      Proiezione Investimento:
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <div>Capitale iniziale: €{yieldResult.principal.toFixed(2)}</div>
                       <div>Valore finale: €{yieldResult.futureValue.toFixed(2)}</div>
@@ -376,6 +402,7 @@ const Tools = () => {
             </Card>
           )}
 
+          {/* Currency Calculator */}
           {activeCalculator === 'currency-calc' && (
             <Card>
               <CardHeader>
@@ -408,12 +435,18 @@ const Tools = () => {
                       </select>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full">Converti</Button>
+                  <Button type="submit" className="w-full">
+                    <ArrowLeftRight className="h-4 w-4 mr-2" />
+                    Converti
+                  </Button>
                 </form>
                 
                 {currencyResult && (
                   <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
-                    <h4 className="font-semibold mb-2">Conversione:</h4>
+                    <h4 className="font-semibold mb-2 flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      Conversione:
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <div>{currencyResult.amount} {currencyResult.from}</div>
                       <div className="text-center">↓ (Tasso: {currencyResult.rate})</div>
@@ -428,46 +461,274 @@ const Tools = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="import-export" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {importExport.map((tool) => (
-              <Card key={tool.id} className="cursor-pointer hover:shadow-lg transition-all">
-                <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-lg ${
-                    tool.type === 'import' ? 'bg-green-100' :
-                    tool.type === 'export' ? 'bg-blue-100' : 'bg-purple-100'
-                  } mb-4 flex items-center justify-center`}>
-                    {React.createElement(
-                      eval(tool.icon),
-                      { 
-                        className: `h-6 w-6 ${
-                          tool.type === 'import' ? 'text-green-600' :
-                          tool.type === 'export' ? 'text-blue-600' : 'text-purple-600'
-                        }`
-                      }
-                    )}
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{tool.name}</h3>
-                  <p className="text-sm text-gray-600">{tool.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="advanced" className="space-y-4">
+        {/* FILE & ANALISI TAB */}
+        <TabsContent value="files" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Strumenti Avanzati</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Upload className="h-5 w-5" />
+                <span>Caricamento e Analisi File</span>
+                <Badge variant="secondary">PDF, JPG, PNG, CSV</Badge>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Funzionalità Avanzate</h3>
-                <p className="text-gray-600 mb-4">
-                  Strumenti di analisi professionale e automazione AI
+              <div className="space-y-4">
+                <div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx"
+                    className="hidden"
+                  />
+                  <Button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Carica File per Analisi AI
+                  </Button>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">PDF Reports</p>
+                    <p className="text-xs text-gray-400">Analisi documenti finanziari</p>
+                  </div>
+                  <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                    <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">Grafici & Foto</p>
+                    <p className="text-xs text-gray-400">Riconoscimento pattern</p>
+                  </div>
+                  <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                    <FileDown className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">Dati CSV</p>
+                    <p className="text-xs text-gray-400">Import transazioni</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Uploaded Files List */}
+          {uploadedFiles.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>File Caricati & Analisi</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {uploadedFiles.map((file) => {
+                    const analysis = analysisResults.find(a => a.fileId === file.id);
+                    return (
+                      <div key={file.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-medium">{file.name}</span>
+                          </div>
+                          <Badge variant={
+                            file.status === 'completed' ? 'default' : 
+                            file.status === 'analyzing' ? 'secondary' : 'destructive'
+                          }>
+                            {file.status === 'completed' ? 'Completato' :
+                             file.status === 'analyzing' ? 'Analizzando...' : 'Caricamento...'}
+                          </Badge>
+                        </div>
+                        
+                        {analysis && (
+                          <div className="mt-3 p-3 bg-indigo-50 rounded-md">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-semibold text-indigo-900">Analisi AI</h5>
+                              <Badge variant="secondary">
+                                Confidenza: {analysis.confidence}%
+                              </Badge>
+                            </div>
+                            <ul className="space-y-1">
+                              {analysis.insights.map((insight, idx) => (
+                                <li key={idx} className="text-sm text-indigo-700 flex items-center space-x-2">
+                                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+                                  <span>{insight}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* PROMEMORIA TAB */}
+        <TabsContent value="reminders" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Bell className="h-5 w-5" />
+                <span>Crea Promemoria & Avvisi</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={addReminder} className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Titolo</Label>
+                  <Input name="title" placeholder="Es. Revisione portafoglio mensile" required />
+                </div>
+                <div>
+                  <Label htmlFor="description">Descrizione</Label>
+                  <Textarea name="description" placeholder="Dettagli del promemoria..." />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="date">Data</Label>
+                    <Input type="date" name="date" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="time">Ora</Label>
+                    <Input type="time" name="time" required />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="priority">Priorità</Label>
+                  <select name="priority" className="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="low">Bassa</option>
+                    <option value="medium">Media</option>
+                    <option value="high">Alta</option>
+                  </select>
+                </div>
+                <Button type="submit" className="w-full">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Crea Promemoria
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Reminders List */}
+          {reminders.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>I Tuoi Promemoria</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {reminders.map((reminder) => (
+                    <div key={reminder.id} className={`border rounded-lg p-4 ${
+                      reminder.priority === 'high' ? 'border-red-200 bg-red-50' :
+                      reminder.priority === 'medium' ? 'border-yellow-200 bg-yellow-50' :
+                      'border-green-200 bg-green-50'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold">{reminder.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{reminder.description}</p>
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                            <span className="flex items-center space-x-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>{reminder.date} alle {reminder.time}</span>
+                            </span>
+                            <Badge variant="outline" size="sm">
+                              {reminder.priority}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* BACKUP TAB */}
+        <TabsContent value="backup" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Download className="h-5 w-5" />
+                <span>Import/Export Dati</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-4">
+                  <h4 className="font-semibold flex items-center space-x-2">
+                    <Download className="h-4 w-4" />
+                    <span>Esporta Dati</span>
+                  </h4>
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => exportData('json')}
+                      variant="outline" 
+                      className="w-full justify-start"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Esporta JSON Completo
+                    </Button>
+                    <Button 
+                      onClick={() => exportData('csv')}
+                      variant="outline" 
+                      className="w-full justify-start"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Esporta CSV Transazioni
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Report PDF Completo
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold flex items-center space-x-2">
+                    <Upload className="h-4 w-4" />
+                    <span>Importa Dati</span>
+                  </h4>
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileUp className="h-4 w-4 mr-2" />
+                      Importa da CSV
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileUp className="h-4 w-4 mr-2" />
+                      Importa da Excel
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Banknote className="h-4 w-4 mr-2" />
+                      Sincronizza Banca
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold mb-2 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2 text-blue-600" />
+                  Backup Automatico
+                </h4>
+                <p className="text-sm text-blue-700 mb-3">
+                  I tuoi dati vengono salvati automaticamente ogni giorno alle 2:00 AM.
+                  Ultimo backup: {new Date().toLocaleDateString('it-IT')}
                 </p>
-                <Button>Scopri di più</Button>
+                <Button variant="outline" size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  Backup Manuale Ora
+                </Button>
               </div>
             </CardContent>
           </Card>
