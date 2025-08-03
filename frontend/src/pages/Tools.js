@@ -17,10 +17,19 @@ import { toolsData } from '../data/mock';
 
 const Tools = () => {
   const { calculators, importExport, aiTools } = toolsData;
+  const { toast } = useToast();
+  
+  // States for different tools
   const [activeCalculator, setActiveCalculator] = useState(null);
   const [taxResult, setTaxResult] = useState(null);
   const [yieldResult, setYieldResult] = useState(null);
   const [currencyResult, setCurrencyResult] = useState(null);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [reminders, setReminders] = useState([]);
+  const [analysisResults, setAnalysisResults] = useState([]);
+  
+  // File upload ref
+  const fileInputRef = useRef(null);
 
   // Tax Calculator
   const calculateTax = (e) => {
@@ -37,6 +46,11 @@ const Tools = () => {
       taxRate: taxRate * 100,
       taxAmount,
       netGain: gain - taxAmount
+    });
+
+    toast({
+      title: "Calcolo completato",
+      description: `Tasse calcolate: €${taxAmount.toFixed(2)}`,
     });
   };
 
@@ -56,6 +70,11 @@ const Tools = () => {
       futureValue,
       totalReturn,
       annualizedReturn: (rate * 100).toFixed(2)
+    });
+
+    toast({
+      title: "Proiezione calcolata",
+      description: `Valore finale: €${futureValue.toFixed(2)}`,
     });
   };
 
@@ -85,25 +104,141 @@ const Tools = () => {
       rate,
       converted
     });
+
+    toast({
+      title: "Conversione completata",
+      description: `${amount} ${from} = ${converted.toFixed(2)} ${to}`,
+    });
   };
 
-  const ToolCard = ({ tool, onClick }) => (
-    <Card 
-      className="cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group"
-      onClick={onClick}
-    >
-      <CardContent className="p-6">
-        <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${tool.color} mb-4 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-          {React.createElement(
-            eval(tool.icon), 
-            { className: "h-6 w-6 text-white" }
-          )}
-        </div>
-        <h3 className="font-semibold text-gray-900 mb-2">{tool.name}</h3>
-        <p className="text-sm text-gray-600">{tool.description}</p>
-      </CardContent>
-    </Card>
-  );
+  // File Upload Handler
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    files.forEach(file => {
+      const newFile = {
+        id: Date.now() + Math.random(),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadDate: new Date(),
+        status: 'uploading'
+      };
+
+      setUploadedFiles(prev => [...prev, newFile]);
+
+      // Simulate upload and analysis
+      setTimeout(() => {
+        setUploadedFiles(prev => 
+          prev.map(f => f.id === newFile.id ? { ...f, status: 'analyzing' } : f)
+        );
+
+        setTimeout(() => {
+          const analysisResult = {
+            fileId: newFile.id,
+            insights: generateMockAnalysis(file),
+            confidence: Math.floor(Math.random() * 30) + 70
+          };
+
+          setAnalysisResults(prev => [...prev, analysisResult]);
+          setUploadedFiles(prev => 
+            prev.map(f => f.id === newFile.id ? { ...f, status: 'completed' } : f)
+          );
+
+          toast({
+            title: "Analisi completata",
+            description: `${file.name} analizzato con successo`,
+          });
+        }, 2000);
+      }, 1000);
+    });
+  };
+
+  // Generate mock analysis based on file type
+  const generateMockAnalysis = (file) => {
+    if (file.type.includes('pdf')) {
+      return [
+        "Documento finanziario rilevato",
+        "Identificate 5 transazioni di investimento", 
+        "Performance media: +8.2% annuo",
+        "Raccomandazione: diversificare portafoglio"
+      ];
+    } else if (file.type.includes('image')) {
+      return [
+        "Grafico finanziario riconosciuto",
+        "Trend rialzista identificato",
+        "Pattern di crescita sostenibile",
+        "Livello di supporto a €45.30"
+      ];
+    } else {
+      return [
+        "Dati strutturati rilevati",
+        "Format compatibile per import",
+        "Transazioni pronte per elaborazione"
+      ];
+    }
+  };
+
+  // Add Reminder
+  const addReminder = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    const newReminder = {
+      id: Date.now(),
+      title: formData.get('title'),
+      description: formData.get('description'),
+      date: formData.get('date'),
+      time: formData.get('time'),
+      priority: formData.get('priority'),
+      status: 'active',
+      createdAt: new Date()
+    };
+
+    setReminders(prev => [...prev, newReminder]);
+    e.target.reset();
+
+    toast({
+      title: "Promemoria creato",
+      description: `${newReminder.title} programmato per ${newReminder.date}`,
+    });
+  };
+
+  // Export Data
+  const exportData = (format) => {
+    const data = {
+      portfolioData: "Mock portfolio data...",
+      reminders: reminders,
+      calculations: { taxResult, yieldResult, currencyResult },
+      timestamp: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { 
+      type: format === 'json' ? 'application/json' : 'text/csv' 
+    });
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pac-monitor-backup.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export completato",
+      description: `Dati esportati in formato ${format.toUpperCase()}`,
+    });
+  };
+
+  // Get icon component
+  const getIcon = (iconName) => {
+    const icons = {
+      Calculator, TrendingUp, ArrowLeftRight, Shield, FileUp, FileDown, 
+      Brain, Sparkles, BarChart, Upload, Download, Camera, FileText,
+      Bell, Calendar
+    };
+    return icons[iconName] || Calculator;
+  };
 
   return (
     <div className="space-y-6">
