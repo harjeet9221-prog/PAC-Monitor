@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Brain, TrendingUp, TrendingDown, AlertTriangle, Target, Lightbulb } from 'lucide-react';
+import { Brain, TrendingUp, TrendingDown, AlertTriangle, Target, Lightbulb, BarChart3 } from 'lucide-react';
 import { marketData } from '../data/mock';
 
 const Dashboard = () => {
