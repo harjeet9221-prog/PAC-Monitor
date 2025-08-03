@@ -1,0 +1,61 @@
+{
+  "short_name": "PAC Monitor",
+  "name": "PAC Monitor - Gestione Investimenti AI",
+  "description": "Monitora i tuoi investimenti con l'aiuto dell'intelligenza artificiale",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["finance", "productivity", "business"],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "type": "image/png",
+      "sizes": "540x720"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mercato",
+      "short_name": "Mercato",
+      "description": "Visualizza andamento mercati",
+      "url": "/",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Portafoglio",
+      "short_name": "Portfolio",
+      "description": "Gestisci il tuo portafoglio",
+      "url": "/portfolio",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Strumenti",
+      "short_name": "Tools",
+      "description": "Utilizza calcolatori e strumenti",
+      "url": "/tools",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
