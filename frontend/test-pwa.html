@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAC Monitor PWA Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .icon-item {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .icon-item img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 PAC Monitor PWA Test</h1>
+    
+    <div class="test-section">
+        <h2>📱 PWA Status</h2>
+        <div id="pwa-status" class="status info">Checking PWA status...</div>
+        <button onclick="checkPWAStatus()">Check PWA Status</button>
+        <button onclick="installPWA()">Install PWA</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Service Worker</h2>
+        <div id="sw-status" class="status info">Checking service worker...</div>
+        <button onclick="checkServiceWorker()">Check Service Worker</button>
+        <button onclick="unregisterSW()">Unregister Service Worker</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Manifest</h2>
+        <div id="manifest-status" class="status info">Checking manifest...</div>
+        <button onclick="checkManifest()">Check Manifest</button>
+        <pre id="manifest-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto;"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>🎨 Icons</h2>
+        <div id="icons-status" class="status info">Checking icons...</div>
+        <div class="icon-grid">
+            <div class="icon-item">
+                <h4>Favicon (16x16)</h4>
+                <img src="/favicon-16x16.png" alt="16x16" onerror="this.style.display='none'">
+                <p>16x16</p>
+            </div>
+            <div class="icon-item">
+                <h4>Favicon (32x32)</h4>
+                <img src="/favicon-32x32.png" alt="32x32" onerror="this.style.display='none'">
+                <p>32x32</p>
+            </div>
+            <div class="icon-item">
+                <h4>Logo (192x192)</h4>
+                <img src="/logo192.png" alt="192x192" onerror="this.style.display='none'">
+                <p>192x192</p>
+            </div>
+            <div class="icon-item">
+                <h4>Logo (512x512)</h4>
+                <img src="/logo512.png" alt="512x512" onerror="this.style.display='none'">
+                <p>512x512</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 Installation</h2>
+        <div id="install-status" class="status info">Checking installation capability...</div>
+        <button onclick="checkInstallCapability()">Check Install Capability</button>
+    </div>
+
+    <script>
+        let deferredPrompt;
+
+        // Check PWA status
+        function checkPWAStatus() {
+            const status = document.getElementById('pwa-status');
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isInstalled = window.navigator.standalone === true;
+            
+            if (isStandalone || isInstalled) {
+                status.className = 'status success';
+                status.textContent = '✅ PWA is installed and running in standalone mode';
+            } else {
+                status.className = 'status info';
+                status.textContent = 'ℹ️ PWA is running in browser mode';
+            }
+        }
+
+        // Check service worker
+        function checkServiceWorker() {
+            const status = document.getElementById('sw-status');
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    if (registrations.length > 0) {
+                        status.className = 'status success';
+                        status.textContent = `✅ Service Worker registered: ${registrations.length} active`;
+                    } else {
+                        status.className = 'status error';
+                        status.textContent = '❌ No service workers registered';
+                    }
+                });
+            } else {
+                status.className = 'status error';
+                status.textContent = '❌ Service Worker not supported';
+            }
+        }
+
+        // Check manifest
+        function checkManifest() {
+            const status = document.getElementById('manifest-status');
+            const content = document.getElementById('manifest-content');
+            
+            if ('serviceWorker' in navigator) {
+                fetch('/manifest.json')
+                    .then(response => response.json())
+                    .then(manifest => {
+                        status.className = 'status success';
+                        status.textContent = '✅ Manifest loaded successfully';
+                        content.textContent = JSON.stringify(manifest, null, 2);
+                    })
+                    .catch(error => {
+                        status.className = 'status error';
+                        status.textContent = '❌ Failed to load manifest';
+                        content.textContent = error.message;
+                    });
+            } else {
+                status.className = 'status error';
+                status.textContent = '❌ Service Worker not supported';
+            }
+        }
+
+        // Check icons
+        function checkIcons() {
+            const status = document.getElementById('icons-status');
+            const icons = ['/favicon-16x16.png', '/favicon-32x32.png', '/logo192.png', '/logo512.png'];
+            let loaded = 0;
+            
+            icons.forEach(icon => {
+                fetch(icon)
+                    .then(response => {
+                        if (response.ok) loaded++;
+                        if (loaded === icons.length) {
+                            status.className = 'status success';
+                            status.textContent = `✅ All icons loaded (${loaded}/${icons.length})`;
+                        }
+                    })
+                    .catch(() => {
+                        if (loaded === icons.length) {
+                            status.className = 'status error';
+                            status.textContent = `❌ Some icons failed to load (${loaded}/${icons.length})`;
+                        }
+                    });
+            });
+        }
+
+        // Check install capability
+        function checkInstallCapability() {
+            const status = document.getElementById('install-status');
+            
+            if (deferredPrompt) {
+                status.className = 'status success';
+                status.textContent = '✅ PWA can be installed';
+            } else {
+                status.className = 'status info';
+                status.textContent = 'ℹ️ Install prompt not available yet';
+            }
+        }
+
+        // Install PWA
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alert('Install prompt not available');
+            }
+        }
+
+        // Unregister service worker
+        function unregisterSW() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                    checkServiceWorker();
+                });
+            }
+        }
+
+        // Listen for install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            checkInstallCapability();
+        });
+
+        // Listen for app installed
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
+            checkPWAStatus();
+        });
+
+        // Run initial checks
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkPWAStatus();
+                checkServiceWorker();
+                checkManifest();
+                checkIcons();
+                checkInstallCapability();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
