@@ -1,169 +1,287 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { usePortfolio } from '../hooks/usePortfolio';
+import { useMarkets } from '../hooks/useMarkets';
+import { usePWA } from '../hooks/usePWA';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Brain, TrendingUp, TrendingDown, AlertTriangle, Target, Lightbulb, BarChart3 } from 'lucide-react';
-import { marketData } from '../data/mock';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  PieChart, 
+  BarChart3, 
+  DollarSign,
+  Download,
+  Plus,
+  Bell,
+  Wifi,
+  WifiOff,
+  Smartphone
+} from 'lucide-react';
 
 const Dashboard = () => {
-  const { globalIndices, aiMarketInsights } = marketData;
+  const { portfolio, metrics, riskMetrics } = usePortfolio();
+  const { marketData, calculateIndicesPerformance } = useMarkets();
+  const { isOnline, canInstall, installApp, isInstalled } = usePWA();
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const getInsightIcon = (type) => {
-    switch(type) {
-      case 'opportunity': return Target;
-      case 'warning': return AlertTriangle;
-      case 'trend': return TrendingUp;
-      default: return Lightbulb;
-    }
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: portfolio.currency
+    }).format(amount);
   };
 
-  const getInsightColor = (type) => {
-    switch(type) {
-      case 'opportunity': return 'from-green-500 to-emerald-600';
-      case 'warning': return 'from-orange-500 to-red-500';
-      case 'trend': return 'from-blue-500 to-indigo-600';
-      default: return 'from-gray-500 to-slate-600';
-    }
+  const formatPercentage = (value) => {
+    return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+  };
+
+  const getPerformanceColor = (value) => {
+    if (value > 0) return 'text-green-600';
+    if (value < 0) return 'text-red-600';
+    return 'text-gray-600';
+  };
+
+  const getPerformanceIcon = (value) => {
+    if (value > 0) return <TrendingUp className="w-4 h-4 text-green-600" />;
+    if (value < 0) return <TrendingDown className="w-4 h-4 text-red-600" />;
+    return null;
   };
 
   return (
-    <div className="space-y-6">
-      {/* AI Market Insights Panel */}
-      <Card className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 shadow-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Brain className="h-6 w-6" />
-            <span>Analisi AI del Mercato</span>
-            <Badge className="bg-white/20 text-white hover:bg-white/30">Live</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {aiMarketInsights.map((insight) => {
-              const IconComponent = getInsightIcon(insight.type);
-              return (
-                <div
-                  key={insight.id}
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-4 hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <div className="flex items-center space-x-2 mb-3">
-                    <IconComponent className="h-5 w-5" />
-                    <h4 className="font-semibold">{insight.title}</h4>
-                  </div>
-                  <p className="text-sm text-white/90 mb-3">{insight.description}</p>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="bg-white/20 px-2 py-1 rounded">
-                      Confidenza: {insight.confidence}%
-                    </span>
-                    <span>{insight.timeframe}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Market Indices Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {globalIndices.map((index) => {
-          const isPositive = index.change > 0;
-          const TrendIcon = isPositive ? TrendingUp : TrendingDown;
-          
-          return (
-            <Card 
-              key={index.id} 
-              className="hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden group"
+    <div className="min-h-screen bg-gray-50 p-4 space-y-6">
+      {/* Header con stato PWA */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Portfolio Pro</h1>
+          <p className="text-sm text-gray-600">
+            {isOnline ? (
+              <span className="flex items-center gap-2 text-green-600">
+                <Wifi className="w-4 h-4" />
+                Online
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 text-red-600">
+                <WifiOff className="w-4 h-4" />
+                Offline
+              </span>
+            )}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {canInstall && !isInstalled && (
+            <Button 
+              size="sm" 
+              onClick={installApp}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              {/* AI Insight Badge */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Badge variant="secondary" className="text-xs bg-indigo-100 text-indigo-700">
-                  <Brain className="h-3 w-3 mr-1" />
-                  AI
-                </Badge>
-              </div>
-              
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {index.name}
-                </CardTitle>
-                <div className={`p-2 rounded-lg bg-gradient-to-r ${
-                  isPositive ? 'from-green-100 to-emerald-100' : 'from-red-100 to-orange-100'
-                }`}>
-                  <TrendIcon className={`h-4 w-4 ${
-                    isPositive ? 'text-green-600' : 'text-red-600'
-                  }`} />
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {index.value.toLocaleString('it-IT', { 
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2 
-                    })}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-sm font-semibold ${
-                      isPositive ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {isPositive ? '+' : ''}{index.change.toFixed(2)}
-                    </span>
-                    <span className={`text-sm ${
-                      isPositive ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      ({isPositive ? '+' : ''}{index.changePercent.toFixed(2)}%)
-                    </span>
-                  </div>
-                  
-                  {/* AI Insight - shown on hover */}
-                  <div className="mt-3 p-2 bg-indigo-50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-xs text-indigo-700">{index.aiInsight}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              <Smartphone className="w-4 h-4 mr-2" />
+              Installa
+            </Button>
+          )}
+          
+          <Button size="sm" variant="outline">
+            <Bell className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Market Overview Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5" />
-            <span>Panoramica Mercati</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <div className="text-sm text-gray-600">Trend Dominante</div>
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="font-semibold text-green-600">Rialzista</span>
+      {/* Metriche principali */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Valore Totale</p>
+                <p className="text-2xl font-bold">{formatCurrency(metrics.totalValue)}</p>
               </div>
+              <DollarSign className="w-8 h-8 opacity-80" />
             </div>
-            
-            <div className="space-y-2">
-              <div className="text-sm text-gray-600">Volatilità Media</div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <span className="font-semibold">Moderata</span>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Performance 1Y</p>
+                <p className="text-2xl font-bold">{formatPercentage(metrics.weightedPerformance)}</p>
               </div>
+              <BarChart3 className="w-8 h-8 opacity-80" />
             </div>
-            
-            <div className="space-y-2">
-              <div className="text-sm text-gray-600">Sentiment AI</div>
-              <div className="flex items-center space-x-2">
-                <Brain className="h-4 w-4 text-indigo-600" />
-                <span className="font-semibold text-indigo-600">Positivo 78%</span>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs principali */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Panoramica</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="markets">Mercati</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          {/* Allocazione asset */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="w-5 h-5" />
+                Allocazione Asset
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {Object.entries(metrics.assetAllocation).map(([assetClass, data]) => (
+                  <div key={assetClass} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="font-medium">{assetClass}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(data.amount)}</p>
+                      <p className="text-sm text-gray-600">{data.weight.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            </CardContent>
+          </Card>
+
+          {/* Metriche di rischio */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Metriche di Rischio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">{riskMetrics.diversificationScore.toFixed(0)}%</p>
+                  <p className="text-sm text-gray-600">Diversificazione</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-orange-600">{riskMetrics.riskLevel}</p>
+                  <p className="text-sm text-gray-600">Livello Rischio</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">{metrics.weightedTER.toFixed(2)}%</p>
+                  <p className="text-sm text-gray-600">TER Medio</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-600">{metrics.volatility.toFixed(1)}%</p>
+                  <p className="text-sm text-gray-600">Volatilità</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="performance" className="space-y-4">
+          {/* Performance per periodo */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance per Periodo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {portfolio.assets.slice(0, 3).map((asset) => (
+                  <div key={asset.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{asset.ticker}</p>
+                      <p className="text-xs text-gray-600">{asset.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-semibold ${getPerformanceColor(asset.performance['1y'])}`}>
+                        {formatPercentage(asset.performance['1y'])}
+                      </p>
+                      <p className="text-xs text-gray-600">{formatCurrency(asset.amount)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Azioni rapide */}
+          <div className="grid grid-cols-2 gap-4">
+            <Button className="w-full" variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Aggiungi Asset
+            </Button>
+            <Button className="w-full" variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Esporta
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="markets" className="space-y-4">
+          {/* Indici principali */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Indici Principali</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {marketData.indices.slice(0, 3).map((index) => (
+                  <div key={index.symbol} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{index.name}</p>
+                      <p className="text-sm text-gray-600">{index.value.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-1">
+                        {getPerformanceIcon(index.changePercent)}
+                        <span className={getPerformanceColor(index.changePercent)}>
+                          {formatPercentage(index.changePercent)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">{index.volume}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sentiment mercato */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sentiment Mercato</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">
+                  {calculateIndicesPerformance().marketSentiment}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {calculateIndicesPerformance().positiveCount} su {marketData.indices.length} indici in positivo
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Footer con azioni rapide */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+        <div className="flex justify-around">
+          <Button variant="ghost" size="sm" className="flex flex-col items-center">
+            <PieChart className="w-5 h-5 mb-1" />
+            <span className="text-xs">Portfolio</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex flex-col items-center">
+            <BarChart3 className="w-5 h-5 mb-1" />
+            <span className="text-xs">Mercati</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex flex-col items-center">
+            <TrendingUp className="w-5 h-5 mb-1" />
+            <span className="text-xs">Strumenti</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

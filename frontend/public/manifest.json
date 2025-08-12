@@ -1,7 +1,7 @@
 {
-  "short_name": "PAC Monitor",
-  "name": "PAC Monitor - Gestione Investimenti AI",
-  "description": "Monitora i tuoi investimenti con l'aiuto dell'intelligenza artificiale",
+  "short_name": "Portfolio Pro",
+  "name": "Portfolio Pro - Monitoraggio Portafoglio e Strumenti Finanziari",
+  "description": "PWA completa per monitorare il tuo portafoglio di investimenti con strumenti finanziari avanzati, calcolatori e analisi in tempo reale",
   "icons": [
     {
       "src": "favicon.ico",
@@ -19,25 +19,28 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#3b82f6",
+  "theme_color": "#1e40af",
   "background_color": "#ffffff",
   "orientation": "portrait-primary",
   "scope": "/",
-  "categories": ["finance", "productivity", "business"],
+  "categories": ["finance", "productivity", "business", "lifestyle"],
+  "lang": "it",
+  "dir": "ltr",
   "screenshots": [
     {
       "src": "screenshot1.png",
       "type": "image/png",
-      "sizes": "540x720"
+      "sizes": "540x720",
+      "form_factor": "narrow"
     }
   ],
   "shortcuts": [
     {
-      "name": "Mercato",
-      "short_name": "Mercato",
-      "description": "Visualizza andamento mercati",
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Panoramica portafoglio e mercati",
       "url": "/",
       "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
     },
@@ -51,11 +54,28 @@
     {
       "name": "Strumenti",
       "short_name": "Tools",
-      "description": "Utilizza calcolatori e strumenti",
+      "description": "Calcolatori e strumenti finanziari",
       "url": "/tools",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mercati",
+      "short_name": "Markets",
+      "description": "Andamento mercati in tempo reale",
+      "url": "/markets",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Notizie",
+      "short_name": "News",
+      "description": "Notizie finanziarie aggiornate",
+      "url": "/news",
       "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
     }
   ],
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

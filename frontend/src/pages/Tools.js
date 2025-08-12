@@ -1,739 +1,1026 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
+import { useFinancialTools } from '../hooks/useFinancialTools';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { useToast } from '../hooks/use-toast';
 import { 
-  Calculator, TrendingUp, ArrowLeftRight, Shield, FileUp, FileDown, 
-  Banknote, Brain, Sparkles, BarChart, Euro, DollarSign, Upload, 
-  Download, Camera, FileText, Bell, Calendar, AlertCircle, CheckCircle,
-  Eye, Trash2, Edit, Save
+  Calculator, 
+  TrendingUp, 
+  PieChart, 
+  DollarSign,
+  Percent,
+  Calendar,
+  BarChart3,
+  Target,
+  AlertTriangle,
+  Info,
+  Download,
+  RefreshCw,
+  Home
 } from 'lucide-react';
-import { toolsData } from '../data/mock';
 
 const Tools = () => {
-  const { calculators, importExport, aiTools } = toolsData;
-  const { toast } = useToast();
-  
-  // States for different tools
-  const [activeCalculator, setActiveCalculator] = useState(null);
-  const [taxResult, setTaxResult] = useState(null);
-  const [yieldResult, setYieldResult] = useState(null);
-  const [currencyResult, setCurrencyResult] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [reminders, setReminders] = useState([]);
-  const [analysisResults, setAnalysisResults] = useState([]);
-  
-  // File upload ref
-  const fileInputRef = useRef(null);
+  const {
+    calculateCompoundInterest,
+    calculateAnnualizedReturn,
+    calculateInflationImpact,
+    calculateMortgage,
+    calculateDiversification,
+    calculateCorrelation,
+    calculateVolatility,
+    calculateSharpeRatio,
+    calculateVaR,
+    calculateAssetAllocation,
+    calculateRebalancing,
+    calculateTransactionCosts
+  } = useFinancialTools();
 
-  // Tax Calculator
-  const calculateTax = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const gain = parseFloat(formData.get('gain'));
-    const holdingPeriod = parseInt(formData.get('holdingPeriod'));
-    
-    let taxRate = holdingPeriod > 365 ? 0.20 : 0.26; // Long-term vs short-term
-    let taxAmount = gain * taxRate;
-    
-    setTaxResult({
-      gain,
-      taxRate: taxRate * 100,
-      taxAmount,
-      netGain: gain - taxAmount
-    });
+  const [activeTab, setActiveTab] = useState('calculators');
+  const [results, setResults] = useState({});
 
-    toast({
-      title: "Calcolo completato",
-      description: `Tasse calcolate: €${taxAmount.toFixed(2)}`,
-    });
-  };
+  // Stati per i calcolatori
+  const [compoundInterest, setCompoundInterest] = useState({
+    principal: 10000,
+    rate: 5,
+    time: 10,
+    frequency: 1
+  });
 
-  // Yield Calculator
-  const calculateYield = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const principal = parseFloat(formData.get('principal'));
-    const rate = parseFloat(formData.get('rate')) / 100;
-    const years = parseInt(formData.get('years'));
-    
-    const futureValue = principal * Math.pow(1 + rate, years);
-    const totalReturn = futureValue - principal;
-    
-    setYieldResult({
-      principal,
-      futureValue,
-      totalReturn,
-      annualizedReturn: (rate * 100).toFixed(2)
-    });
+  const [annualizedReturn, setAnnualizedReturn] = useState({
+    initialValue: 10000,
+    finalValue: 15000,
+    timeInYears: 5
+  });
 
-    toast({
-      title: "Proiezione calcolata",
-      description: `Valore finale: €${futureValue.toFixed(2)}`,
-    });
-  };
+  const [inflation, setInflation] = useState({
+    amount: 10000,
+    inflationRate: 2,
+    years: 10
+  });
 
-  // Currency Converter
-  const convertCurrency = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const amount = parseFloat(formData.get('amount'));
-    const from = formData.get('from');
-    const to = formData.get('to');
-    
-    // Mock exchange rates
-    const rates = {
-      'EUR-USD': 1.0892,
-      'USD-EUR': 0.9181,
-      'EUR-GBP': 0.8651,
-      'GBP-EUR': 1.1558
-    };
-    
-    const rate = rates[`${from}-${to}`] || 1;
-    const converted = amount * rate;
-    
-    setCurrencyResult({
-      amount,
-      from,
-      to,
-      rate,
-      converted
-    });
+  const [mortgage, setMortgage] = useState({
+    principal: 200000,
+    annualRate: 3.5,
+    years: 30,
+    paymentFrequency: 12
+  });
 
-    toast({
-      title: "Conversione completata",
-      description: `${amount} ${from} = ${converted.toFixed(2)} ${to}`,
-    });
-  };
+  const [diversification, setDiversification] = useState({
+    weights: [40, 30, 20, 10]
+  });
 
-  // File Upload Handler
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    
-    files.forEach(file => {
-      const newFile = {
-        id: Date.now() + Math.random(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        uploadDate: new Date(),
-        status: 'uploading'
-      };
+  const [correlation, setCorrelation] = useState({
+    returns1: [2.5, 3.1, -1.2, 4.5, 2.8],
+    returns2: [1.8, 2.9, -0.8, 3.2, 2.1]
+  });
 
-      setUploadedFiles(prev => [...prev, newFile]);
+  const [volatility, setVolatility] = useState({
+    returns: [2.5, 3.1, -1.2, 4.5, 2.8, -0.5, 1.9, 3.2, -2.1, 4.8],
+    period: 'annual'
+  });
 
-      // Simulate upload and analysis
-      setTimeout(() => {
-        setUploadedFiles(prev => 
-          prev.map(f => f.id === newFile.id ? { ...f, status: 'analyzing' } : f)
-        );
+  const [sharpeRatio, setSharpeRatio] = useState({
+    returns: [2.5, 3.1, -1.2, 4.5, 2.8, -0.5, 1.9, 3.2, -2.1, 4.8],
+    riskFreeRate: 2
+  });
 
-        setTimeout(() => {
-          const analysisResult = {
-            fileId: newFile.id,
-            insights: generateMockAnalysis(file),
-            confidence: Math.floor(Math.random() * 30) + 70
-          };
+  const [var, setVar] = useState({
+    returns: [2.5, 3.1, -1.2, 4.5, 2.8, -0.5, 1.9, 3.2, -2.1, 4.8],
+    confidence: 95,
+    timeHorizon: 1
+  });
 
-          setAnalysisResults(prev => [...prev, analysisResult]);
-          setUploadedFiles(prev => 
-            prev.map(f => f.id === newFile.id ? { ...f, status: 'completed' } : f)
-          );
+  const [assetAllocation, setAssetAllocation] = useState({
+    totalAmount: 100000,
+    allocations: [
+      { name: 'Azioni', percentage: 60, riskLevel: 'Alto' },
+      { name: 'Obbligazioni', percentage: 30, riskLevel: 'Basso' },
+      { name: 'Commodity', percentage: 10, riskLevel: 'Medio' }
+    ]
+  });
 
-          toast({
-            title: "Analisi completata",
-            description: `${file.name} analizzato con successo`,
-          });
-        }, 2000);
-      }, 1000);
-    });
-  };
+  const [rebalancing, setRebalancing] = useState({
+    currentAllocations: [
+      { assetClass: 'Azioni', amount: 65000 },
+      { assetClass: 'Obbligazioni', amount: 28000 },
+      { assetClass: 'Commodity', amount: 7000 }
+    ],
+    targetAllocations: [
+      { assetClass: 'Azioni', percentage: 60 },
+      { assetClass: 'Obbligazioni', percentage: 30 },
+      { assetClass: 'Commodity', percentage: 10 }
+    ],
+    totalValue: 100000
+  });
 
-  // Generate mock analysis based on file type
-  const generateMockAnalysis = (file) => {
-    if (file.type.includes('pdf')) {
-      return [
-        "Documento finanziario rilevato",
-        "Identificate 5 transazioni di investimento", 
-        "Performance media: +8.2% annuo",
-        "Raccomandazione: diversificare portafoglio"
-      ];
-    } else if (file.type.includes('image')) {
-      return [
-        "Grafico finanziario riconosciuto",
-        "Trend rialzista identificato",
-        "Pattern di crescita sostenibile",
-        "Livello di supporto a €45.30"
-      ];
-    } else {
-      return [
-        "Dati strutturati rilevati",
-        "Format compatibile per import",
-        "Transazioni pronte per elaborazione"
-      ];
+  const [transactionCosts, setTransactionCosts] = useState({
+    amount: 10000,
+    commissionRate: 0.1,
+    taxRate: 26
+  });
+
+  const handleCalculate = (calculator, data) => {
+    let result;
+    switch (calculator) {
+      case 'compoundInterest':
+        result = calculateCompoundInterest(data.principal, data.rate, data.time, data.frequency);
+        break;
+      case 'annualizedReturn':
+        result = calculateAnnualizedReturn(data.initialValue, data.finalValue, data.timeInYears);
+        break;
+      case 'inflation':
+        result = calculateInflationImpact(data.amount, data.inflationRate, data.years);
+        break;
+      case 'mortgage':
+        result = calculateMortgage(data.principal, data.annualRate, data.years, data.paymentFrequency);
+        break;
+      case 'diversification':
+        result = calculateDiversification(data.weights);
+        break;
+      case 'correlation':
+        result = calculateCorrelation(data.returns1, data.returns2);
+        break;
+      case 'volatility':
+        result = calculateVolatility(data.returns, data.period);
+        break;
+      case 'sharpeRatio':
+        result = calculateSharpeRatio(data.returns, data.riskFreeRate);
+        break;
+      case 'var':
+        result = calculateVaR(data.returns, data.confidence, data.timeHorizon);
+        break;
+      case 'assetAllocation':
+        result = calculateAssetAllocation(data.totalAmount, data.allocations);
+        break;
+      case 'rebalancing':
+        result = calculateRebalancing(data.currentAllocations, data.targetAllocations, data.totalValue);
+        break;
+      case 'transactionCosts':
+        result = calculateTransactionCosts(data.amount, data.commissionRate, data.taxRate);
+        break;
+      default:
+        return;
     }
+    setResults(prev => ({ ...prev, [calculator]: result }));
   };
 
-  // Add Reminder
-  const addReminder = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    
-    const newReminder = {
-      id: Date.now(),
-      title: formData.get('title'),
-      description: formData.get('description'),
-      date: formData.get('date'),
-      time: formData.get('time'),
-      priority: formData.get('priority'),
-      status: 'active',
-      createdAt: new Date()
-    };
-
-    setReminders(prev => [...prev, newReminder]);
-    e.target.reset();
-
-    toast({
-      title: "Promemoria creato",
-      description: `${newReminder.title} programmato per ${newReminder.date}`,
-    });
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount);
   };
 
-  // Export Data
-  const exportData = (format) => {
-    const data = {
-      portfolioData: "Mock portfolio data...",
-      reminders: reminders,
-      calculations: { taxResult, yieldResult, currencyResult },
-      timestamp: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { 
-      type: format === 'json' ? 'application/json' : 'text/csv' 
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pac-monitor-backup.${format}`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export completato",
-      description: `Dati esportati in formato ${format.toUpperCase()}`,
-    });
-  };
-
-  // Get icon component
-  const getIcon = (iconName) => {
-    const icons = {
-      Calculator, TrendingUp, ArrowLeftRight, Shield, FileUp, FileDown, 
-      Brain, Sparkles, BarChart, Upload, Download, Camera, FileText,
-      Bell, Calendar
-    };
-    return icons[iconName] || Calculator;
+  const formatPercentage = (value) => {
+    return `${value.toFixed(2)}%`;
   };
 
   return (
-    <div className="space-y-6">
-      {/* AI Tools Section */}
-      <Card className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 shadow-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Brain className="h-6 w-6" />
-            <span>Strumenti AI Avanzati</span>
-            <Badge className="bg-white/20 text-white hover:bg-white/30">Pro</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {aiTools.map((tool) => {
-              const IconComponent = getIcon(tool.icon);
-              return (
-                <div
-                  key={tool.id}
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center space-x-2 mb-3">
-                    <IconComponent className="h-5 w-5" />
-                    <h4 className="font-semibold">{tool.name}</h4>
-                    <Badge 
-                      variant={tool.status === 'active' ? 'secondary' : 'destructive'}
-                      className={tool.status === 'active' ? 'bg-green-500/20 text-green-200' : 'bg-orange-500/20 text-orange-200'}
-                    >
-                      {tool.status}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-white/90">{tool.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-gray-50 p-4 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Strumenti Finanziari</h1>
+          <p className="text-sm text-gray-600">
+            Calcolatori e strumenti per la gestione del portafoglio
+          </p>
+        </div>
+        
+        <Button variant="outline" size="sm">
+          <Download className="w-4 h-4 mr-2" />
+          Esporta
+        </Button>
+      </div>
 
-      <Tabs defaultValue="calculators" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      {/* Tabs principali */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="calculators">Calcolatori</TabsTrigger>
-          <TabsTrigger value="files">File & Analisi</TabsTrigger>
-          <TabsTrigger value="reminders">Promemoria</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
+          <TabsTrigger value="analysis">Analisi</TabsTrigger>
+          <TabsTrigger value="planning">Pianificazione</TabsTrigger>
         </TabsList>
 
-        {/* CALCOLATORI TAB */}
-        <TabsContent value="calculators" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {calculators.map((tool) => {
-              const IconComponent = getIcon(tool.icon);
-              return (
-                <Card
-                  key={tool.id}
-                  className="cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group"
-                  onClick={() => setActiveCalculator(tool.id)}
-                >
-                  <CardContent className="p-6">
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${tool.color} mb-4 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <IconComponent className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">{tool.name}</h3>
-                    <p className="text-sm text-gray-600">{tool.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Tax Calculator */}
-          {activeCalculator === 'tax-calc' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Calculator className="h-5 w-5" />
-                  <span>Calcolatore Tasse su Capital Gains</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={calculateTax} className="space-y-4">
-                  <div>
-                    <Label htmlFor="gain">Guadagno Totale (€)</Label>
-                    <Input type="number" name="gain" placeholder="Es. 5000" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="holdingPeriod">Periodo di detenzione (giorni)</Label>
-                    <Input type="number" name="holdingPeriod" placeholder="Es. 400" required />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Calculator className="h-4 w-4 mr-2" />
-                    Calcola Tasse
-                  </Button>
-                </form>
-                
-                {taxResult && (
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold mb-2 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Risultato Calcolo:
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div>Guadagno lordo: €{taxResult.gain.toFixed(2)}</div>
-                      <div>Aliquota fiscale: {taxResult.taxRate}%</div>
-                      <div>Tasse da pagare: €{taxResult.taxAmount.toFixed(2)}</div>
-                      <div className="font-semibold text-green-600">
-                        Guadagno netto: €{taxResult.netGain.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Yield Calculator */}
-          {activeCalculator === 'yield-calc' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5" />
-                  <span>Calcolatore Rendimento Investimento</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={calculateYield} className="space-y-4">
-                  <div>
-                    <Label htmlFor="principal">Capitale iniziale (€)</Label>
-                    <Input type="number" name="principal" placeholder="Es. 10000" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="rate">Rendimento annuo atteso (%)</Label>
-                    <Input type="number" step="0.1" name="rate" placeholder="Es. 7.5" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="years">Periodo di investimento (anni)</Label>
-                    <Input type="number" name="years" placeholder="Es. 10" required />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Calcola Rendimento
-                  </Button>
-                </form>
-                
-                {yieldResult && (
-                  <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                    <h4 className="font-semibold mb-2 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Proiezione Investimento:
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div>Capitale iniziale: €{yieldResult.principal.toFixed(2)}</div>
-                      <div>Valore finale: €{yieldResult.futureValue.toFixed(2)}</div>
-                      <div className="font-semibold text-green-600">
-                        Guadagno totale: €{yieldResult.totalReturn.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Currency Calculator */}
-          {activeCalculator === 'currency-calc' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <ArrowLeftRight className="h-5 w-5" />
-                  <span>Convertitore Valute</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={convertCurrency} className="space-y-4">
-                  <div>
-                    <Label htmlFor="amount">Importo</Label>
-                    <Input type="number" step="0.01" name="amount" placeholder="Es. 1000" required />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="from">Da</Label>
-                      <select name="from" className="w-full p-2 border border-gray-300 rounded-md">
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="GBP">GBP</option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor="to">A</Label>
-                      <select name="to" className="w-full p-2 border border-gray-300 rounded-md">
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                      </select>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <ArrowLeftRight className="h-4 w-4 mr-2" />
-                    Converti
-                  </Button>
-                </form>
-                
-                {currencyResult && (
-                  <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
-                    <h4 className="font-semibold mb-2 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Conversione:
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div>{currencyResult.amount} {currencyResult.from}</div>
-                      <div className="text-center">↓ (Tasso: {currencyResult.rate})</div>
-                      <div className="font-semibold text-blue-600">
-                        {currencyResult.converted.toFixed(2)} {currencyResult.to}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* FILE & ANALISI TAB */}
-        <TabsContent value="files" className="space-y-4">
+        <TabsContent value="calculators" className="space-y-6">
+          {/* Interesse Composto */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Upload className="h-5 w-5" />
-                <span>Caricamento e Analisi File</span>
-                <Badge variant="secondary">PDF, JPG, PNG, CSV</Badge>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="w-5 h-5" />
+                Calcolatore Interesse Composto
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="principal">Capitale Iniziale (€)</Label>
+                  <Input
+                    id="principal"
+                    type="number"
+                    value={compoundInterest.principal}
+                    onChange={(e) => setCompoundInterest(prev => ({ ...prev, principal: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rate">Tasso di Interesse (%)</Label>
+                  <Input
+                    id="rate"
+                    type="number"
+                    step="0.1"
+                    value={compoundInterest.rate}
+                    onChange={(e) => setCompoundInterest(prev => ({ ...prev, rate: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="time">Tempo (anni)</Label>
+                  <Input
+                    id="time"
+                    type="number"
+                    value={compoundInterest.time}
+                    onChange={(e) => setCompoundInterest(prev => ({ ...prev, time: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="frequency">Frequenza Capitalizzazione</Label>
+                  <select
+                    id="frequency"
+                    value={compoundInterest.frequency}
+                    onChange={(e) => setCompoundInterest(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value={1}>Annuale</option>
+                    <option value={2}>Semestrale</option>
+                    <option value={4}>Trimestrale</option>
+                    <option value={12}>Mensile</option>
+                  </select>
+                </div>
+              </div>
+              
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => handleCalculate('compoundInterest', compoundInterest)}
+              >
+                Calcola
+              </Button>
+
+              {results.compoundInterest && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Risultati:</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Capitale Iniziale:</strong> {formatCurrency(results.compoundInterest.principal)}</p>
+                      <p><strong>Interesse:</strong> {formatCurrency(results.compoundInterest.interest)}</p>
+                    </div>
+                    <div>
+                      <p><strong>Montante Finale:</strong> {formatCurrency(results.compoundInterest.amount)}</p>
+                      <p><strong>Tasso:</strong> {formatPercentage(results.compoundInterest.rate)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Rendimento Annualizzato */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Calcolatore Rendimento Annualizzato
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="initialValue">Valore Iniziale (€)</Label>
+                  <Input
+                    id="initialValue"
+                    type="number"
+                    value={annualizedReturn.initialValue}
+                    onChange={(e) => setAnnualizedReturn(prev => ({ ...prev, initialValue: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="finalValue">Valore Finale (€)</Label>
+                  <Input
+                    id="finalValue"
+                    type="number"
+                    value={annualizedReturn.finalValue}
+                    onChange={(e) => setAnnualizedReturn(prev => ({ ...prev, finalValue: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="timeInYears">Tempo (anni)</Label>
+                  <Input
+                    id="timeInYears"
+                    type="number"
+                    step="0.1"
+                    value={annualizedReturn.timeInYears}
+                    onChange={(e) => setAnnualizedReturn(prev => ({ ...prev, timeInYears: parseFloat(e.target.value) }))}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => handleCalculate('annualizedReturn', annualizedReturn)}
+              >
+                Calcola
+              </Button>
+
+              {results.annualizedReturn && (
+                <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Risultati:</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Rendimento Totale:</strong> {formatPercentage(results.annualizedReturn.totalReturn)}</p>
+                      <p><strong>Rendimento Annualizzato:</strong> {formatPercentage(results.annualizedReturn.annualizedReturn)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Inflazione */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Percent className="w-5 h-5" />
+                Calcolatore Impatto Inflazione
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="inflationAmount">Importo (€)</Label>
+                  <Input
+                    id="inflationAmount"
+                    type="number"
+                    value={inflation.amount}
+                    onChange={(e) => setInflation(prev => ({ ...prev, amount: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="inflationRate">Tasso Inflazione (%)</Label>
+                  <Input
+                    id="inflationRate"
+                    type="number"
+                    step="0.1"
+                    value={inflation.inflationRate}
+                    onChange={(e) => setInflation(prev => ({ ...prev, inflationRate: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="inflationYears">Anni</Label>
+                  <Input
+                    id="inflationYears"
+                    type="number"
+                    value={inflation.years}
+                    onChange={(e) => setInflation(prev => ({ ...prev, years: parseInt(e.target.value) }))}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => handleCalculate('inflation', inflation)}
+              >
+                Calcola
+              </Button>
+
+              {results.inflation && (
+                <div className="mt-4 p-4 bg-orange-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Risultati:</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Importo Originale:</strong> {formatCurrency(results.inflation.originalAmount)}</p>
+                      <p><strong>Valore Futuro:</strong> {formatCurrency(results.inflation.futureValue)}</p>
+                    </div>
+                    <div>
+                      <p><strong>Potere d'Acquisto:</strong> {formatCurrency(results.inflation.purchasingPower)}</p>
+                      <p><strong>Perdita:</strong> {formatCurrency(results.inflation.loss)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Mutuo */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Home className="w-5 h-5" />
+                Calcolatore Mutuo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="mortgagePrincipal">Capitale (€)</Label>
+                  <Input
+                    id="mortgagePrincipal"
+                    type="number"
+                    value={mortgage.principal}
+                    onChange={(e) => setMortgage(prev => ({ ...prev, principal: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="mortgageRate">Tasso Annuo (%)</Label>
+                  <Input
+                    id="mortgageRate"
+                    type="number"
+                    step="0.1"
+                    value={mortgage.annualRate}
+                    onChange={(e) => setMortgage(prev => ({ ...prev, annualRate: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="mortgageYears">Durata (anni)</Label>
+                  <Input
+                    id="mortgageYears"
+                    type="number"
+                    value={mortgage.years}
+                    onChange={(e) => setMortgage(prev => ({ ...prev, years: parseInt(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="paymentFrequency">Frequenza Pagamenti</Label>
+                  <select
+                    id="paymentFrequency"
+                    value={mortgage.paymentFrequency}
+                    onChange={(e) => setMortgage(prev => ({ ...prev, paymentFrequency: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value={12}>Mensile</option>
+                    <option value={4}>Trimestrale</option>
+                    <option value={2}>Semestrale</option>
+                    <option value={1}>Annuale</option>
+                  </select>
+                </div>
+              </div>
+              
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => handleCalculate('mortgage', mortgage)}
+              >
+                Calcola
+              </Button>
+
+              {results.mortgage && (
+                <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Risultati:</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Rata:</strong> {formatCurrency(results.mortgage.monthlyPayment)}</p>
+                      <p><strong>Totale Pagato:</strong> {formatCurrency(results.mortgage.totalPayment)}</p>
+                    </div>
+                    <div>
+                      <p><strong>Interessi Totali:</strong> {formatCurrency(results.mortgage.totalInterest)}</p>
+                      <p><strong>Tasso:</strong> {formatPercentage(results.mortgage.annualRate)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analysis" className="space-y-6">
+          {/* Diversificazione */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="w-5 h-5" />
+                Analisi Diversificazione
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx"
-                    className="hidden"
+                  <Label>Pesi Asset (separati da virgola, %)</Label>
+                  <Input
+                    placeholder="40, 30, 20, 10"
+                    value={diversification.weights.join(', ')}
+                    onChange={(e) => setDiversification(prev => ({ 
+                      weights: e.target.value.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w))
+                    }))}
                   />
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Carica File per Analisi AI
-                  </Button>
                 </div>
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('diversification', diversification)}
+                >
+                  Analizza
+                </Button>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                    <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">PDF Reports</p>
-                    <p className="text-xs text-gray-400">Analisi documenti finanziari</p>
+                {results.diversification && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><strong>Indice HHI:</strong> {results.diversification.hhi.toFixed(4)}</p>
+                        <p><strong>N Effettivo:</strong> {results.diversification.effectiveN.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p><strong>Indice Diversificazione:</strong> {formatPercentage(results.diversification.diversificationIndex)}</p>
+                        <p><strong>Livello:</strong> {results.diversification.diversificationLevel}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                    <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">Grafici & Foto</p>
-                    <p className="text-xs text-gray-400">Riconoscimento pattern</p>
-                  </div>
-                  <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                    <FileDown className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">Dati CSV</p>
-                    <p className="text-xs text-gray-400">Import transazioni</p>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Uploaded Files List */}
-          {uploadedFiles.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>File Caricati & Analisi</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {uploadedFiles.map((file) => {
-                    const analysis = analysisResults.find(a => a.fileId === file.id);
-                    return (
-                      <div key={file.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <FileText className="h-4 w-4" />
-                            <span className="font-medium">{file.name}</span>
-                          </div>
-                          <Badge variant={
-                            file.status === 'completed' ? 'default' : 
-                            file.status === 'analyzing' ? 'secondary' : 'destructive'
-                          }>
-                            {file.status === 'completed' ? 'Completato' :
-                             file.status === 'analyzing' ? 'Analizzando...' : 'Caricamento...'}
-                          </Badge>
-                        </div>
-                        
-                        {analysis && (
-                          <div className="mt-3 p-3 bg-indigo-50 rounded-md">
-                            <div className="flex items-center justify-between mb-2">
-                              <h5 className="font-semibold text-indigo-900">Analisi AI</h5>
-                              <Badge variant="secondary">
-                                Confidenza: {analysis.confidence}%
-                              </Badge>
-                            </div>
-                            <ul className="space-y-1">
-                              {analysis.insights.map((insight, idx) => (
-                                <li key={idx} className="text-sm text-indigo-700 flex items-center space-x-2">
-                                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
-                                  <span>{insight}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* PROMEMORIA TAB */}
-        <TabsContent value="reminders" className="space-y-4">
+          {/* Correlazione */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5" />
-                <span>Crea Promemoria & Avvisi</span>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Analisi Correlazione
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={addReminder} className="space-y-4">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Titolo</Label>
-                  <Input name="title" placeholder="Es. Revisione portafoglio mensile" required />
+                  <Label>Rendimenti Asset 1 (separati da virgola, %)</Label>
+                  <Input
+                    placeholder="2.5, 3.1, -1.2, 4.5, 2.8"
+                    value={correlation.returns1.join(', ')}
+                    onChange={(e) => setCorrelation(prev => ({ 
+                      ...prev,
+                      returns1: e.target.value.split(',').map(r => parseFloat(r.trim())).filter(r => !isNaN(r))
+                    }))}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="description">Descrizione</Label>
-                  <Textarea name="description" placeholder="Dettagli del promemoria..." />
+                  <Label>Rendimenti Asset 2 (separati da virgola, %)</Label>
+                  <Input
+                    placeholder="1.8, 2.9, -0.8, 3.2, 2.1"
+                    value={correlation.returns2.join(', ')}
+                    onChange={(e) => setCorrelation(prev => ({ 
+                      ...prev,
+                      returns2: e.target.value.split(',').map(r => parseFloat(r.trim())).filter(r => !isNaN(r))
+                    }))}
+                  />
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('correlation', correlation)}
+                >
+                  Analizza
+                </Button>
+
+                {results.correlation && (
+                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><strong>Correlazione:</strong> {results.correlation.correlation.toFixed(4)}</p>
+                        <p><strong>Forza:</strong> {results.correlation.strength}</p>
+                      </div>
+                      <div>
+                        <p><strong>Direzione:</strong> {results.correlation.direction}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Volatilità */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Analisi Volatilità
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Rendimenti (separati da virgola, %)</Label>
+                  <Input
+                    placeholder="2.5, 3.1, -1.2, 4.5, 2.8, -0.5, 1.9, 3.2, -2.1, 4.8"
+                    value={volatility.returns.join(', ')}
+                    onChange={(e) => setVolatility(prev => ({ 
+                      ...prev,
+                      returns: e.target.value.split(',').map(r => parseFloat(r.trim())).filter(r => !isNaN(r))
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label>Periodo</Label>
+                  <select
+                    value={volatility.period}
+                    onChange={(e) => setVolatility(prev => ({ ...prev, period: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="daily">Giornaliero</option>
+                    <option value="weekly">Settimanale</option>
+                    <option value="monthly">Mensile</option>
+                    <option value="annual">Annuale</option>
+                  </select>
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('volatility', volatility)}
+                >
+                  Analizza
+                </Button>
+
+                {results.volatility && (
+                  <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><strong>Deviazione Standard:</strong> {formatPercentage(results.volatility.standardDeviation)}</p>
+                        <p><strong>Varianza:</strong> {formatPercentage(results.volatility.variance)}</p>
+                      </div>
+                      <div>
+                        <p><strong>Volatilità Annualizzata:</strong> {formatPercentage(results.volatility.annualizedVolatility)}</p>
+                        <p><strong>Periodo:</strong> {results.volatility.period}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sharpe Ratio */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Sharpe Ratio
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Rendimenti (separati da virgola, %)</Label>
+                  <Input
+                    placeholder="2.5, 3.1, -1.2, 4.5, 2.8, -0.5, 1.9, 3.2, -2.1, 4.8"
+                    value={sharpeRatio.returns.join(', ')}
+                    onChange={(e) => setSharpeRatio(prev => ({ 
+                      ...prev,
+                      returns: e.target.value.split(',').map(r => parseFloat(r.trim())).filter(r => !isNaN(r))
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label>Tasso Privo di Rischio (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={sharpeRatio.riskFreeRate}
+                    onChange={(e) => setSharpeRatio(prev => ({ ...prev, riskFreeRate: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('sharpeRatio', sharpeRatio)}
+                >
+                  Calcola
+                </Button>
+
+                {results.sharpeRatio && (
+                  <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><strong>Sharpe Ratio:</strong> {results.sharpeRatio.sharpeRatio.toFixed(4)}</p>
+                        <p><strong>Rendimento Eccesso:</strong> {formatPercentage(results.sharpeRatio.excessReturn)}</p>
+                      </div>
+                      <div>
+                        <p><strong>Volatilità:</strong> {formatPercentage(results.sharpeRatio.volatility)}</p>
+                        <p><strong>Interpretazione:</strong> {results.sharpeRatio.interpretation}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* VaR */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Value at Risk (VaR)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Rendimenti (separati da virgola, %)</Label>
+                  <Input
+                    placeholder="2.5, 3.1, -1.2, 4.5, 2.8, -0.5, 1.9, 3.2, -2.1, 4.8"
+                    value={var.returns.join(', ')}
+                    onChange={(e) => setVar(prev => ({ 
+                      ...prev,
+                      returns: e.target.value.split(',').map(r => parseFloat(r.trim())).filter(r => !isNaN(r))
+                    }))}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="date">Data</Label>
-                    <Input type="date" name="date" required />
+                    <Label>Livello di Confidenza (%)</Label>
+                    <Input
+                      type="number"
+                      value={var.confidence}
+                      onChange={(e) => setVar(prev => ({ ...prev, confidence: parseInt(e.target.value) }))}
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="time">Ora</Label>
-                    <Input type="time" name="time" required />
+                    <Label>Orizzonte Temporale (anni)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={var.timeHorizon}
+                      onChange={(e) => setVar(prev => ({ ...prev, timeHorizon: parseFloat(e.target.value) }))}
+                    />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="priority">Priorità</Label>
-                  <select name="priority" className="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="low">Bassa</option>
-                    <option value="medium">Media</option>
-                    <option value="high">Alta</option>
-                  </select>
-                </div>
-                <Button type="submit" className="w-full">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Crea Promemoria
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('var', var)}
+                >
+                  Calcola
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
 
-          {/* Reminders List */}
-          {reminders.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>I Tuoi Promemoria</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {reminders.map((reminder) => (
-                    <div key={reminder.id} className={`border rounded-lg p-4 ${
-                      reminder.priority === 'high' ? 'border-red-200 bg-red-50' :
-                      reminder.priority === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                      'border-green-200 bg-green-50'
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-semibold">{reminder.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{reminder.description}</p>
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                            <span className="flex items-center space-x-1">
-                              <Calendar className="h-3 w-3" />
-                              <span>{reminder.date} alle {reminder.time}</span>
-                            </span>
-                            <Badge variant="outline" size="sm">
-                              {reminder.priority}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                {results.var && (
+                  <div className="mt-4 p-4 bg-red-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><strong>VaR:</strong> {formatPercentage(results.var.varValue)}</p>
+                        <p><strong>VaR Aggiustato:</strong> {formatPercentage(results.var.adjustedVaR)}</p>
+                      </div>
+                      <div>
+                        <p><strong>Confidenza:</strong> {results.var.confidence}%</p>
+                        <p><strong>Orizzonte:</strong> {results.var.timeHorizon} anni</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    <p className="mt-2 text-sm text-gray-700">{results.var.interpretation}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* BACKUP TAB */}
-        <TabsContent value="backup" className="space-y-4">
+        <TabsContent value="planning" className="space-y-6">
+          {/* Asset Allocation */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Download className="h-5 w-5" />
-                <span>Import/Export Dati</span>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="w-5 h-5" />
+                Pianificazione Asset Allocation
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-4">
-                  <h4 className="font-semibold flex items-center space-x-2">
-                    <Download className="h-4 w-4" />
-                    <span>Esporta Dati</span>
-                  </h4>
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={() => exportData('json')}
-                      variant="outline" 
-                      className="w-full justify-start"
-                    >
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Esporta JSON Completo
-                    </Button>
-                    <Button 
-                      onClick={() => exportData('csv')}
-                      variant="outline" 
-                      className="w-full justify-start"
-                    >
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Esporta CSV Transazioni
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                    >
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Report PDF Completo
-                    </Button>
-                  </div>
+              <div className="space-y-4">
+                <div>
+                  <Label>Capitale Totale (€)</Label>
+                  <Input
+                    type="number"
+                    value={assetAllocation.totalAmount}
+                    onChange={(e) => setAssetAllocation(prev => ({ ...prev, totalAmount: parseFloat(e.target.value) }))}
+                  />
                 </div>
-
-                <div className="space-y-4">
-                  <h4 className="font-semibold flex items-center space-x-2">
-                    <Upload className="h-4 w-4" />
-                    <span>Importa Dati</span>
-                  </h4>
-                  <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start">
-                      <FileUp className="h-4 w-4 mr-2" />
-                      Importa da CSV
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <FileUp className="h-4 w-4 mr-2" />
-                      Importa da Excel
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Banknote className="h-4 w-4 mr-2" />
-                      Sincronizza Banca
-                    </Button>
-                  </div>
+                
+                <div className="space-y-2">
+                  <Label>Allocazioni</Label>
+                  {assetAllocation.allocations.map((allocation, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        placeholder="Nome asset"
+                        value={allocation.name}
+                        onChange={(e) => {
+                          const newAllocations = [...assetAllocation.allocations];
+                          newAllocations[index].name = e.target.value;
+                          setAssetAllocation(prev => ({ ...prev, allocations: newAllocations }));
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="%"
+                        value={allocation.percentage}
+                        onChange={(e) => {
+                          const newAllocations = [...assetAllocation.allocations];
+                          newAllocations[index].percentage = parseFloat(e.target.value);
+                          setAssetAllocation(prev => ({ ...prev, allocations: newAllocations }));
+                        }}
+                      />
+                      <select
+                        value={allocation.riskLevel}
+                        onChange={(e) => {
+                          const newAllocations = [...assetAllocation.allocations];
+                          newAllocations[index].riskLevel = e.target.value;
+                          setAssetAllocation(prev => ({ ...prev, allocations: newAllocations }));
+                        }}
+                        className="px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="Basso">Basso</option>
+                        <option value="Medio">Medio</option>
+                        <option value="Alto">Alto</option>
+                      </select>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold mb-2 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-2 text-blue-600" />
-                  Backup Automatico
-                </h4>
-                <p className="text-sm text-blue-700 mb-3">
-                  I tuoi dati vengono salvati automaticamente ogni giorno alle 2:00 AM.
-                  Ultimo backup: {new Date().toLocaleDateString('it-IT')}
-                </p>
-                <Button variant="outline" size="sm">
-                  <Save className="h-4 w-4 mr-2" />
-                  Backup Manuale Ora
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('assetAllocation', assetAllocation)}
+                >
+                  Pianifica
                 </Button>
+
+                {results.assetAllocation && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="space-y-2">
+                      {results.assetAllocation.allocations.map((allocation, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span>{allocation.assetClass}</span>
+                          <span>{formatCurrency(allocation.amount)} ({allocation.percentage}%)</span>
+                        </div>
+                      ))}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between font-semibold">
+                          <span>Totale Allocato:</span>
+                          <span>{formatPercentage(results.assetAllocation.totalAllocated)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Non Allocato:</span>
+                          <span>{formatPercentage(results.assetAllocation.unallocated)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Rebalancing */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw className="w-5 h-5" />
+                Calcolatore Rebalancing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Valore Totale Portafoglio (€)</Label>
+                  <Input
+                    type="number"
+                    value={rebalancing.totalValue}
+                    onChange={(e) => setRebalancing(prev => ({ ...prev, totalValue: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  onClick={() => handleCalculate('rebalancing', rebalancing)}
+                >
+                  Calcola Rebalancing
+                </Button>
+
+                {results.rebalancing && (
+                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Risultati:</h4>
+                    <div className="space-y-2">
+                      {results.rebalancing.rebalancing.map((item, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span>{item.assetClass}</span>
+                          <span className={item.difference > 0 ? 'text-green-600' : 'text-red-600'}>
+                            {item.action} {formatCurrency(item.amount)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between font-semibold">
+                          <span>Totale Rebalancing:</span>
+                          <span>{formatCurrency(results.rebalancing.totalRebalancing)}</span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {results.rebalancing.needsRebalancing ? 
+                            '🟡 Rebalancing necessario (>5%)' : 
+                            '🟢 Portafoglio bilanciato'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Costi di Transazione */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Calcolatore Costi di Transazione
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="transactionAmount">Importo Transazione (€)</Label>
+                  <Input
+                    id="transactionAmount"
+                    type="number"
+                    value={transactionCosts.amount}
+                    onChange={(e) => setTransactionCosts(prev => ({ ...prev, amount: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="commissionRate">Commissione (%)</Label>
+                  <Input
+                    id="commissionRate"
+                    type="number"
+                    step="0.01"
+                    value={transactionCosts.commissionRate}
+                    onChange={(e) => setTransactionCosts(prev => ({ ...prev, commissionRate: parseFloat(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="taxRate">Tassazione (%)</Label>
+                  <Input
+                    id="taxRate"
+                    type="number"
+                    step="0.1"
+                    value={transactionCosts.taxRate}
+                    onChange={(e) => setTransactionCosts(prev => ({ ...prev, taxRate: parseFloat(e.target.value) }))}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => handleCalculate('transactionCosts', transactionCosts)}
+              >
+                Calcola
+              </Button>
+
+              {results.transactionCosts && (
+                <div className="mt-4 p-4 bg-orange-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Risultati:</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Importo Lordo:</strong> {formatCurrency(results.transactionCosts.grossAmount)}</p>
+                      <p><strong>Commissione:</strong> {formatCurrency(results.transactionCosts.commission)}</p>
+                    </div>
+                    <div>
+                      <p><strong>Tasse:</strong> {formatCurrency(results.transactionCosts.tax)}</p>
+                      <p><strong>Importo Netto:</strong> {formatCurrency(results.transactionCosts.netAmount)}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p><strong>Costi Totali:</strong> {formatCurrency(results.transactionCosts.totalCosts)}</p>
+                      <p><strong>% Costi:</strong> {formatPercentage(results.transactionCosts.costRatio)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Footer con azioni rapide */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+        <div className="flex justify-around">
+          <Button variant="ghost" size="sm" className="flex flex-col items-center">
+            <Calculator className="w-5 h-5 mb-1" />
+            <span className="text-xs">Calcolatori</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex flex-col items-center">
+            <BarChart3 className="w-5 h-5 mb-1" />
+            <span className="text-xs">Analisi</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex flex-col items-center">
+            <Target className="w-5 h-5 mb-1" />
+            <span className="text-xs">Pianificazione</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
