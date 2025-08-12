@@ -5,6 +5,7 @@ import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Portfolio from './pages/Portfolio';
 import Tools from './pages/Tools';
+import PWAInstall from './components/PWAInstall';
 import './App.css';
 
 // Simple test component to verify basic functionality
@@ -28,6 +29,7 @@ function App() {
           </Routes>
         </MainLayout>
         <Toaster />
+        <PWAInstall />
       </div>
     </Router>
   );
