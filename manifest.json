@@ -1,0 +1,100 @@
+{
+    "name": "Portfolio Monitor - Gestione Investimenti",
+    "short_name": "Portfolio Monitor",
+    "description": "Monitora il tuo portafoglio di investimenti con strumenti finanziari avanzati",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#2563eb",
+    "background_color": "#ffffff",
+    "categories": ["finance", "productivity", "business"],
+    "lang": "it",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "Visualizza il dashboard del portafoglio",
+            "url": "/#dashboard",
+            "icons": [{"src": "icons/icon-192x192.png", "sizes": "192x192"}]
+        },
+        {
+            "name": "Aggiungi Posizione",
+            "short_name": "Aggiungi",
+            "description": "Aggiungi una nuova posizione al portafoglio",
+            "url": "/#portfolio",
+            "icons": [{"src": "icons/icon-192x192.png", "sizes": "192x192"}]
+        },
+        {
+            "name": "Mercati",
+            "short_name": "Mercati",
+            "description": "Visualizza i mercati finanziari",
+            "url": "/#markets",
+            "icons": [{"src": "icons/icon-192x192.png", "sizes": "192x192"}]
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "screenshots/mobile-dashboard.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "screenshots/mobile-portfolio.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ]
+}

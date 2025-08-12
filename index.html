@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Monitora il tuo portafoglio di investimenti con strumenti finanziari avanzati">
+    
+    <title>Portfolio Monitor - Gestione Investimenti</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Caricamento Portfolio...</p>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Portfolio Monitor</h1>
+                <button id="menu-toggle" class="menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Menu -->
+        <nav id="nav-menu" class="nav-menu">
+            <ul>
+                <li><a href="#dashboard" class="nav-link active" data-page="dashboard">
+                    <span class="icon">📊</span>Dashboard
+                </a></li>
+                <li><a href="#portfolio" class="nav-link" data-page="portfolio">
+                    <span class="icon">💼</span>Portafoglio
+                </a></li>
+                <li><a href="#markets" class="nav-link" data-page="markets">
+                    <span class="icon">📈</span>Mercati
+                </a></li>
+                <li><a href="#calculator" class="nav-link" data-page="calculator">
+                    <span class="icon">🧮</span>Calcolatori
+                </a></li>
+                <li><a href="#alerts" class="nav-link" data-page="alerts">
+                    <span class="icon">🔔</span>Avvisi
+                </a></li>
+                <li><a href="#settings" class="nav-link" data-page="settings">
+                    <span class="icon">⚙️</span>Impostazioni
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page active">
+                <div class="dashboard-grid">
+                    <!-- Portfolio Summary Card -->
+                    <div class="card portfolio-summary">
+                        <h2>Valore Totale Portafoglio</h2>
+                        <div class="portfolio-value">
+                            <span id="total-value" class="value">€0,00</span>
+                            <span id="daily-change" class="change positive">+0,00%</span>
+                        </div>
+                        <div class="portfolio-metrics">
+                            <div class="metric">
+                                <span class="label">Guadagno/Perdita</span>
+                                <span id="total-pl" class="value">€0,00</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Rendimento</span>
+                                <span id="total-return" class="value">0,00%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="card chart-container">
+                        <h3>Performance Portafoglio</h3>
+                        <canvas id="performance-chart"></canvas>
+                    </div>
+
+                    <!-- Asset Allocation -->
+                    <div class="card chart-container">
+                        <h3>Allocazione Asset</h3>
+                        <canvas id="allocation-chart"></canvas>
+                    </div>
+
+                    <!-- Top Holdings -->
+                    <div class="card holdings-list">
+                        <h3>Principali Posizioni</h3>
+                        <div id="top-holdings"></div>
+                    </div>
+
+                    <!-- Market Overview -->
+                    <div class="card market-overview">
+                        <h3>Panoramica Mercati</h3>
+                        <div id="market-indices"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Page -->
+            <div id="portfolio-page" class="page">
+                <div class="page-header">
+                    <h2>Il Mio Portafoglio</h2>
+                    <button id="add-position-btn" class="btn btn-primary">+ Aggiungi</button>
+                </div>
+                
+                <div class="portfolio-filters">
+                    <select id="asset-filter">
+                        <option value="all">Tutti gli Asset</option>
+                        <option value="stocks">Azioni</option>
+                        <option value="etf">ETF</option>
+                        <option value="bonds">Obbligazioni</option>
+                        <option value="crypto">Crypto</option>
+                    </select>
+                </div>
+
+                <div id="portfolio-list" class="portfolio-list"></div>
+            </div>
+
+            <!-- Markets Page -->
+            <div id="markets-page" class="page">
+                <div class="page-header">
+                    <h2>Mercati Finanziari</h2>
+                </div>
+                
+                <div class="market-tabs">
+                    <button class="tab-btn active" data-market="indices">Indici</button>
+                    <button class="tab-btn" data-market="stocks">Azioni</button>
+                    <button class="tab-btn" data-market="crypto">Crypto</button>
+                    <button class="tab-btn" data-market="forex">Forex</button>
+                </div>
+
+                <div id="markets-content" class="markets-content"></div>
+            </div>
+
+            <!-- Calculator Page -->
+            <div id="calculator-page" class="page">
+                <div class="page-header">
+                    <h2>Calcolatori Finanziari</h2>
+                </div>
+
+                <div class="calculator-tabs">
+                    <button class="tab-btn active" data-calc="compound">Interesse Composto</button>
+                    <button class="tab-btn" data-calc="retirement">Pensione</button>
+                    <button class="tab-btn" data-calc="loan">Prestito</button>
+                </div>
+
+                <div id="calculator-content" class="calculator-content">
+                    <!-- Compound Interest Calculator -->
+                    <div id="compound-calc" class="calc-form active">
+                        <div class="input-group">
+                            <label>Capitale Iniziale (€)</label>
+                            <input type="number" id="initial-amount" value="1000" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Contributo Mensile (€)</label>
+                            <input type="number" id="monthly-contribution" value="100" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Tasso di Interesse Annuo (%)</label>
+                            <input type="number" id="interest-rate" value="7" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Periodo (anni)</label>
+                            <input type="number" id="time-period" value="10" min="1" max="50">
+                        </div>
+                        <button id="calculate-compound" class="btn btn-primary">Calcola</button>
+                        <div id="compound-result" class="calc-result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Page -->
+            <div id="alerts-page" class="page">
+                <div class="page-header">
+                    <h2>Avvisi di Prezzo</h2>
+                    <button id="add-alert-btn" class="btn btn-primary">+ Nuovo Avviso</button>
+                </div>
+                <div id="alerts-list" class="alerts-list"></div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings-page" class="page">
+                <div class="page-header">
+                    <h2>Impostazioni</h2>
+                </div>
+                
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <label>Valuta di Base</label>
+                        <select id="base-currency">
+                            <option value="EUR">Euro (€)</option>
+                            <option value="USD">Dollaro US ($)</option>
+                            <option value="GBP">Sterlina (£)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Tema</label>
+                        <select id="theme-selector">
+                            <option value="light">Chiaro</option>
+                            <option value="dark">Scuro</option>
+                            <option value="auto">Automatico</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Notifiche Push</label>
+                        <input type="checkbox" id="push-notifications" checked>
+                    </div>
+                    <div class="setting-item">
+                        <label>Aggiornamento Automatico</label>
+                        <input type="checkbox" id="auto-refresh" checked>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="export-data-btn" class="btn btn-secondary">Esporta Dati</button>
+                    <button id="import-data-btn" class="btn btn-secondary">Importa Dati</button>
+                    <button id="reset-data-btn" class="btn btn-danger">Reset Dati</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                <span class="icon">📊</span>
+                <span class="label">Dashboard</span>
+            </a>
+            <a href="#portfolio" class="nav-item" data-page="portfolio">
+                <span class="icon">💼</span>
+                <span class="label">Portafoglio</span>
+            </a>
+            <a href="#markets" class="nav-item" data-page="markets">
+                <span class="icon">📈</span>
+                <span class="label">Mercati</span>
+            </a>
+            <a href="#calculator" class="nav-item" data-page="calculator">
+                <span class="icon">🧮</span>
+                <span class="label">Calcola</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="add-position-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Aggiungi Posizione</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-position-form" class="modal-body">
+                <div class="input-group">
+                    <label>Simbolo/Ticker</label>
+                    <input type="text" id="position-symbol" placeholder="es. AAPL, VWCE.DE" required>
+                </div>
+                <div class="input-group">
+                    <label>Tipo di Asset</label>
+                    <select id="position-type" required>
+                        <option value="">Seleziona tipo</option>
+                        <option value="stock">Azione</option>
+                        <option value="etf">ETF</option>
+                        <option value="bond">Obbligazione</option>
+                        <option value="crypto">Criptovaluta</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Quantità</label>
+                    <input type="number" id="position-quantity" step="0.001" min="0" required>
+                </div>
+                <div class="input-group">
+                    <label>Prezzo di Acquisto (€)</label>
+                    <input type="number" id="position-price" step="0.01" min="0" required>
+                </div>
+                <div class="input-group">
+                    <label>Data di Acquisto</label>
+                    <input type="date" id="position-date" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary close-modal">Annulla</button>
+                    <button type="submit" class="btn btn-primary">Aggiungi Posizione</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/portfolio.js"></script>
+    <script src="js/markets.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/charts.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
